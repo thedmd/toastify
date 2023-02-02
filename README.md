@@ -1,3 +1,10 @@
+# THIS PROJECT IS NO LONGER MAINTAINED
+If you are looking for a replacement you can check out these other amazing projects:
+- [AudioBand](https://github.com/AudioBand/AudioBand)
+- [Lofi](https://github.com/dvx/lofi)
+
+or use Spotify's own overlay on Windows (check out [this article](https://www.alphr.com/spotify-overlay-with-game-windows/)).
+
 # Toastify
 
 [![Codacy grade](https://api.codacy.com/project/badge/Grade/dcbbd6b1f6cf45658a0f9232a5f35706)][aleab/toastify@codacy]
