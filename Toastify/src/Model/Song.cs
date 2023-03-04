@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using log4net;
-using SpotifyAPI.Web.Models;
+using SpotifyAPI.Web;
 using Toastify.Core;
 using ToastifyAPI.Core;
 using ToastifyAPI.Model.Interfaces;

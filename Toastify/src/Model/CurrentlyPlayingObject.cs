@@ -1,8 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 using log4net;
-using SpotifyAPI.Web.Enums;
-using SpotifyAPI.Web.Models;
+using SpotifyAPI.Web;
 using ToastifyAPI.Core;
 using ToastifyAPI.Model.Interfaces;
 
@@ -31,7 +30,7 @@ namespace Toastify.Model
 
         // ReSharper disable ConstantConditionalAccessQualifier
         // ReSharper disable once ConstantNullCoalescingCondition
-        public CurrentlyPlayingObject([NotNull] PlaybackContext playbackContext)
+        public CurrentlyPlayingObject([NotNull] CurrentlyPlaying playbackContext)
             : this(playbackContext?.ProgressMs ?? 0, playbackContext?.IsPlaying ?? false, null, SpotifyTrackType.Unknown)
         {
             if (playbackContext == null)
@@ -39,26 +38,27 @@ namespace Toastify.Model
 
             switch (playbackContext.CurrentlyPlayingType)
             {
-                case TrackType.Track:
-                    if (playbackContext.Item != null)
-                        this.Track = new Song(playbackContext.Item);
+                case "track":
+                    if (playbackContext.Item is FullTrack)
+                        this.Track = new Song(playbackContext.Item as FullTrack);
                     break;
 
-                case TrackType.Episode:
-                    this.Track = new SpotifyTrack(SpotifyTrackType.Episode, playbackContext.Item?.Name, (playbackContext.Item?.DurationMs ?? 0) / 1000);
+                case "episode":
+                    if (playbackContext.Item is FullEpisode)
+                        this.Track = new SpotifyTrack(SpotifyTrackType.Episode, (playbackContext.Item as FullEpisode).Name, (playbackContext.Item as FullEpisode).DurationMs / 1000);
                     break;
 
-                case TrackType.Ad:
+                case "ad":
                     this.Track = new SpotifyTrack(SpotifyTrackType.Ad);
                     break;
 
-                case TrackType.Unknown:
-                    this.Track = new SpotifyTrack(SpotifyTrackType.Unknown, playbackContext.Item?.Name, (playbackContext.Item?.DurationMs ?? 0) / 1000);
+                case "unknown":
+                    this.Track = new SpotifyTrack(SpotifyTrackType.Unknown);
                     break;
 
                 default:
                     logger.Error($"Unexpected CurrentlyPlayingType of current playback context: {playbackContext.CurrentlyPlayingType}");
-                    this.Track = new SpotifyTrack(SpotifyTrackType.Unknown, playbackContext.Item?.Name, (playbackContext.Item?.DurationMs ?? 0) / 1000);
+                    this.Track = new SpotifyTrack(SpotifyTrackType.Unknown);
                     break;
             }
 

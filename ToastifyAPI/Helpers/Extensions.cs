@@ -88,12 +88,16 @@ namespace ToastifyAPI.Helpers
             }
         }
 
-        public static MenuItem FindMenuItem(this Menu menu, Shortcut shortcut)
+        public static ToolStripMenuItem FindMenuItem(this ContextMenuStrip menu, Keys shortcut)
         {
             if (menu == null)
                 throw new ArgumentNullException(nameof(menu));
 
-            return menu.FindMenuItem(Menu.FindShortcut, new IntPtr((int)shortcut));
+            foreach (ToolStripMenuItem item in menu.Items)
+                if (item.ShortcutKeys == shortcut)
+                    return item;
+
+            return null;
         }
 
         #endregion

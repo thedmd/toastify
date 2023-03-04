@@ -72,11 +72,11 @@ namespace Toastify.View
                         if (property.PropertyType.GetInterfaces().Contains(typeof(ICollection)))
                             continue;
 
-                        if (property.PropertyType == typeof(ProxyConfigAdapter))
+                        if (property.PropertyType == typeof(SpotifyProxyConfig))
                         {
-                            var cp = (ProxyConfigAdapter)current;
-                            var pp = (ProxyConfigAdapter)preview;
-                            var dp = (ProxyConfigAdapter)@default;
+                            var cp = (SpotifyProxyConfig)current;
+                            var pp = (SpotifyProxyConfig)preview;
+                            var dp = (SpotifyProxyConfig)@default;
 
                             Debug.WriteLine($"{property.Name,-36}:  {cp?.ToString(true),-30} | {pp?.ToString(true),-30} | {dp?.ToString(true),-30}");
                         }
@@ -99,10 +99,10 @@ namespace Toastify.View
                         if (property.PropertyType.GetInterfaces().Contains(typeof(ICollection)))
                             continue;
 
-                        if (property.PropertyType == typeof(ProxyConfigAdapter))
+                        if (property.PropertyType == typeof(SpotifyProxyConfig))
                         {
-                            var cp = (ProxyConfigAdapter)current;
-                            var dp = (ProxyConfigAdapter)@default;
+                            var cp = (SpotifyProxyConfig)current;
+                            var dp = (SpotifyProxyConfig)@default;
 
                             Debug.WriteLine($"{property.Name,-36}:  {cp?.ToString(true),-30} | {dp?.ToString(true),-30}");
                         }

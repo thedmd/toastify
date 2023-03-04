@@ -1,77 +1,50 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using SpotifyAPI.Web;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using ToastifyAPI.Core.Auth;
-using ToastifyAPI.Core.Auth.ToastifyWebAuthAPI.Structs;
-using SpotifyAPIWebToken = SpotifyAPI.Web.Models.Token;
+using ToastifyAPI.Events;
+using IToken = ToastifyAPI.Core.Auth.IToken;
 
-namespace Toastify.Core.Auth
+namespace Toastify.src.Core.Auth
 {
     [Serializable]
     public class Token : IToken, IEquatable<Token>
     {
-        #region Public Properties
+        public string AccessToken { get; private set; } = string.Empty;
 
-        public string AccessToken { get; }
-        public string TokenType { get; }
-        public double ExpiresIn { get; }
-        public string RefreshToken { get; }
-        public DateTime CreateDate { get; }
+        public string TokenType { get; private set; } = string.Empty;
 
-        #endregion
+        public double ExpiresIn { get; private set; } = 0;
 
-        internal Token()
+        public string RefreshToken { get; private set; } = string.Empty;
+
+        public DateTime CreateDate { get; private set; } = DateTime.MinValue;
+
+        public Token()
         {
         }
 
-        public Token(SpotifyTokenResponse token)
+        public Token(AuthorizationCodeRefreshResponse response)
         {
-            this.AccessToken = token.accessToken;
-            this.TokenType = token.tokenType;
-            this.ExpiresIn = token.expiresIn;
-            this.RefreshToken = token.refreshToken;
-            this.CreateDate = token.CreationDate;
+            AccessToken = response?.AccessToken;
+            TokenType = response?.TokenType;
+            ExpiresIn = (double)response?.ExpiresIn;
+            CreateDate = response?.CreatedAt ?? DateTime.MinValue;
+            RefreshToken = response?.RefreshToken;
         }
 
-        public Token([NotNull] SpotifyAPIWebToken token)
+        public Token(AuthorizationCodeTokenResponse response)
         {
-            this.AccessToken = token.AccessToken;
-            this.TokenType = token.TokenType;
-            this.ExpiresIn = token.ExpiresIn;
-            this.RefreshToken = token.RefreshToken;
-            this.CreateDate = token.CreateDate;
+            AccessToken = response?.AccessToken;
+            TokenType = response?.TokenType;
+            ExpiresIn = (double)response?.ExpiresIn;
+            CreateDate = response?.CreatedAt ?? DateTime.MinValue;
+            RefreshToken = response?.RefreshToken;
         }
-
-        public Token([NotNull] IToken token)
-        {
-            this.AccessToken = token.AccessToken;
-            this.TokenType = token.TokenType;
-            this.ExpiresIn = token.ExpiresIn;
-            this.RefreshToken = token.RefreshToken;
-            this.CreateDate = token.CreateDate;
-        }
-
-        public bool IsExpired()
-        {
-            return this.CreateDate.Add(TimeSpan.FromSeconds(this.ExpiresIn)) <= DateTime.Now;
-        }
-
-        #region Static Members
-
-        public static implicit operator SpotifyAPIWebToken(Token token)
-        {
-            return new SpotifyAPIWebToken
-            {
-                AccessToken = token.AccessToken,
-                TokenType = token.TokenType,
-                ExpiresIn = token.ExpiresIn,
-                RefreshToken = token.RefreshToken,
-                CreateDate = token.CreateDate
-            };
-        }
-
-        #endregion
-
-        #region Equality Members
 
         public bool Equals(IToken other)
         {
@@ -92,15 +65,14 @@ namespace Toastify.Core.Auth
             return this.Equals((IToken)other);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object other)
         {
-            if (obj == null)
+            if (other == null)
                 return false;
-            if (ReferenceEquals(this, obj))
+            if (ReferenceEquals(this, other))
                 return true;
 
-            return obj.GetType() == this.GetType() &&
-                   this.Equals((Token)obj);
+            return other.GetType() == this.GetType() && this.Equals((Token)other);
         }
 
         public override int GetHashCode()
@@ -116,6 +88,9 @@ namespace Toastify.Core.Auth
             }
         }
 
-        #endregion
+        public bool IsExpired()
+        {
+            return CreateDate.AddSeconds(ExpiresIn) <= DateTime.UtcNow;
+        }
     }
 }

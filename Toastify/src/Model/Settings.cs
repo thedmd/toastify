@@ -345,7 +345,7 @@ namespace Toastify.Model
                 }
 
                 // ProxyConfig
-                clone._proxyConfig = (ProxyConfigAdapter)this._proxyConfig.Clone();
+                clone._proxyConfig = (SpotifyProxyConfig)this._proxyConfig.Clone();
 
                 clone.SanitizeSettingsInstance();
             }
@@ -444,9 +444,9 @@ namespace Toastify.Model
                     if (property.PropertyType.GetInterfaces().Contains(typeof(ICollection)))
                         continue;
 
-                    if (property.PropertyType == typeof(ProxyConfigAdapter))
+                    if (property.PropertyType == typeof(SpotifyProxyConfig))
                     {
-                        var proxy = (ProxyConfigAdapter)current;
+                        var proxy = (SpotifyProxyConfig)current;
                         sb.Append($"{indent}{property.Name}: {proxy.ToString(true)}{Environment.NewLine}");
                     }
                 }
@@ -591,7 +591,7 @@ namespace Toastify.Model
 
         // [Advanced]
         private SettingValue<bool> _useProxy;
-        private ProxyConfigAdapter _proxyConfig;
+        private SpotifyProxyConfig _proxyConfig;
         private SettingValue<bool> _enableBroadcaster;
         private SettingValue<bool> _enableSpotifyWebApi;
 
@@ -1016,12 +1016,12 @@ namespace Toastify.Model
         }
 
         [JsonConverter(typeof(SecureProxyConfigJsonConverter))]
-        public ProxyConfigAdapter ProxyConfig
+        public SpotifyProxyConfig ProxyConfig
         {
             get
             {
                 if (this._proxyConfig == null)
-                    this._proxyConfig = new ProxyConfigAdapter();
+                    this._proxyConfig = new SpotifyProxyConfig();
 
                 // Retrieve the encrypted password
                 string plaintext = Security.GetSecureProxyPassword()?.ToPlainString();
@@ -1199,7 +1199,7 @@ namespace Toastify.Model
         public void SetDefaultAdvanced()
         {
             this.UseProxy = DefaultValueOf(this.UseProxy, nameof(this.UseProxy));
-            this.ProxyConfig = new ProxyConfigAdapter();
+            this.ProxyConfig = new SpotifyProxyConfig();
             this.EnableBroadcaster = DefaultValueOf(this.EnableBroadcaster, nameof(this.EnableBroadcaster));
             this.EnableSpotifyWebApi = DefaultValueOf(this.EnableSpotifyWebApi, nameof(this.EnableSpotifyWebApi));
         }

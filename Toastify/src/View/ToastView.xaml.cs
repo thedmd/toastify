@@ -41,14 +41,15 @@ using ToastifyAPI.Native.Enums;
 using ToastifyAPI.Native.Structs;
 using Application = System.Windows.Application;
 using Color = System.Windows.Media.Color;
-using ContextMenu = System.Windows.Forms.ContextMenu;
-using MenuItem = System.Windows.Forms.MenuItem;
+using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
+using ToolStripMenuItem = System.Windows.Forms.ToolStripMenuItem;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using PixelFormat = System.Windows.Media.PixelFormat;
 using Point = System.Windows.Point;
 using Size = System.Drawing.Size;
 using Spotify = Toastify.Core.Spotify;
 using Timer = System.Timers.Timer;
+using NotNullAttribute = JetBrains.Annotations.NotNullAttribute;
 
 namespace Toastify.View
 {
@@ -57,10 +58,10 @@ namespace Toastify.View
     {
         private static readonly ILog logger = LogManager.GetLogger(typeof(ToastView));
 
-        private const Shortcut TRAY_MENU_SHORTCUT_SETTINGS = Shortcut.CtrlShiftA;
-        private const Shortcut TRAY_MENU_SHORTCUT_SPOTIFY_AUTH = Shortcut.CtrlShiftS;
-        private const Shortcut TRAY_MENU_SHORTCUT_ABOUT = Shortcut.CtrlF1;
-        private const Shortcut TRAY_MENU_SHORTCUT_EXIT = Shortcut.AltF4;
+        private const Keys TRAY_MENU_SHORTCUT_SETTINGS = Keys.Control | Keys.Shift | Keys.A;
+        private const Keys TRAY_MENU_SHORTCUT_SPOTIFY_AUTH = Keys.Control | Keys.Shift | Keys.S;
+        private const Keys TRAY_MENU_SHORTCUT_ABOUT = Keys.Control | Keys.F1;
+        private const Keys TRAY_MENU_SHORTCUT_EXIT = Keys.Alt | Keys.F4;
 
         private const string DEFAULT_ICON = "pack://application:,,,/Toastify;component/Resources/SpotifyToastifyLogo.png";
         private const string AD_PLAYING_ICON = "pack://application:,,,/Toastify;component/Resources/SpotifyAdPlaying.png";
@@ -267,8 +268,7 @@ namespace Toastify.View
             this.Title2.FontSize = this.Settings.ToastTitle2FontSize;
 
             // [ SONG PROGRESS BAR ]
-            //this.SongProgressBar.Visibility = this.Settings.ShowSongProgressBar ? Visibility.Visible : Visibility.Hidden;
-            this.SongProgressBar.Visibility = Visibility.Hidden;
+            this.SongProgressBar.Visibility = this.Settings.ShowSongProgressBar ? Visibility.Visible : Visibility.Hidden;
             this.SongProgressBarContainer.Background = new SolidColorBrush(ColorHelper.HexToColor(this.Settings.SongProgressBarBackgroundColor));
             this.SongProgressBarLine.Background = new SolidColorBrush(ColorHelper.HexToColor(this.Settings.SongProgressBarForegroundColor));
             this.SongProgressBarLineEllipse.Fill = new SolidColorBrush(ColorHelper.HexToColor(this.Settings.SongProgressBarForegroundColor));
@@ -280,7 +280,7 @@ namespace Toastify.View
             {
                 AnimationStepMilliseconds = 75,
                 Visible = true,
-                ContextMenu = new ContextMenu()
+                ContextMenuStrip = new TrayMenu()
             };
 
             object[] animationIcons = {
@@ -318,47 +318,48 @@ namespace Toastify.View
             this.trayIcon.StartAnimation();
 
             // Init tray icon menu
-            MenuItem menuSettings = new MenuItem
+            ToolStripMenuItem menuSettings = new ToolStripMenuItem
             {
                 Text = @"Settings",
-                DefaultItem = true,
+                //DefaultItem = true,
                 Enabled = false,
-                Shortcut = TRAY_MENU_SHORTCUT_SETTINGS,
-                ShowShortcut = false
+                ShortcutKeys = TRAY_MENU_SHORTCUT_SETTINGS,
+                ShowShortcutKeys = false
             };
+            menuSettings.Font = new Font(menuSettings.Font, menuSettings.Font.Style | System.Drawing.FontStyle.Bold);
             menuSettings.Click += (s, ev) => { SettingsView.Launch(this); };
 
-            MenuItem menuSpotifyAuth = new MenuItem
+            ToolStripMenuItem menuSpotifyAuth = new ToolStripMenuItem
             {
                 Text = @"Spotify Authorization",
                 Enabled = false,
-                Visible = false,
-                Shortcut = TRAY_MENU_SHORTCUT_SPOTIFY_AUTH,
-                ShowShortcut = false
+                //Visible = false,
+                ShortcutKeys = TRAY_MENU_SHORTCUT_SPOTIFY_AUTH,
+                ShowShortcutKeys = false
             };
             menuSpotifyAuth.Click += (s, ev) => { Spotify.Instance.EnableWebApi(); };
 
-            MenuItem menuAbout = new MenuItem
+            ToolStripMenuItem menuAbout = new ToolStripMenuItem
             {
                 Text = @"About Toastify",
-                Shortcut = TRAY_MENU_SHORTCUT_ABOUT,
-                ShowShortcut = false
+                ShortcutKeys = TRAY_MENU_SHORTCUT_ABOUT,
+                ShowShortcutKeys = false
             };
             menuAbout.Click += (s, ev) => { new AboutView().ShowDialog(); };
 
-            MenuItem menuExit = new MenuItem
+            ToolStripMenuItem menuExit = new ToolStripMenuItem
             {
                 Text = @"Exit",
-                Shortcut = TRAY_MENU_SHORTCUT_EXIT,
-                ShowShortcut = false
+                ShortcutKeys = TRAY_MENU_SHORTCUT_EXIT,
+                ShowShortcutKeys = false
             };
             menuExit.Click += this.ToastView_Exit;
 
-            this.trayIcon.ContextMenu.MenuItems.Add(menuSettings);
-            this.trayIcon.ContextMenu.MenuItems.Add(menuSpotifyAuth);
-            this.trayIcon.ContextMenu.MenuItems.Add(menuAbout);
-            this.trayIcon.ContextMenu.MenuItems.Add("-");
-            this.trayIcon.ContextMenu.MenuItems.Add(menuExit);
+            this.trayIcon.ContextMenuStrip.Items.Add(menuSettings);
+            this.trayIcon.ContextMenuStrip.Items.Add(menuSpotifyAuth);
+            this.trayIcon.ContextMenuStrip.Items.Add(menuAbout);
+            this.trayIcon.ContextMenuStrip.Items.Add("-");
+            this.trayIcon.ContextMenuStrip.Items.Add(menuExit);
         }
 
         private void FinalizeTrayIconInitialization()
@@ -368,11 +369,11 @@ namespace Toastify.View
             this.trayIcon.Text = @"Toastify";
             this.trayIcon.Icon = Properties.Resources.ToastifyIcon;
 
-            var menuSettings = this.trayIcon.ContextMenu.FindMenuItem(TRAY_MENU_SHORTCUT_SETTINGS);
+            var menuSettings = this.trayIcon.ContextMenuStrip.FindMenuItem(TRAY_MENU_SHORTCUT_SETTINGS);
             if (menuSettings != null)
                 menuSettings.Enabled = true;
 
-            var menuSpotifyAuth = this.trayIcon.ContextMenu.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
+            var menuSpotifyAuth = this.trayIcon.ContextMenuStrip.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
             if (menuSpotifyAuth != null)
                 menuSpotifyAuth.Enabled = true;
 
@@ -420,7 +421,7 @@ namespace Toastify.View
             }
 
             this.currentTrack = track;
-            
+
             this.UpdateToastText(track);
             this.UpdateSongProgressBar(0.0);
             this.UpdateAlbumArt();
@@ -1216,24 +1217,33 @@ namespace Toastify.View
             this.paused = !e.Playing;
             this.UpdateCurrentTrack(e.CurrentTrack);
             this.UpdateSongProgressBar(e.TrackTime);
-            
-            var menuSpotifyAuth = this.trayIcon.ContextMenu.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
-            if (menuSpotifyAuth != null)
-                menuSpotifyAuth.Visible = false;
+
+            this.Dispatcher.BeginInvoke(() =>
+            {
+                var menuSpotifyAuth = this.trayIcon.ContextMenuStrip.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
+                if (menuSpotifyAuth != null)
+                    menuSpotifyAuth.Visible = false;
+            });
         }
 
         private void Spotify_WebAPIInitializationFailed(object sender, SpotifyWebAPIInitializationFailedEventArgs e)
         {
-            var menuSpotifyAuth = this.trayIcon.ContextMenu.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
-            if (menuSpotifyAuth != null)
-                menuSpotifyAuth.Visible = true;
+            this.Dispatcher.BeginInvoke(() =>
+            {
+                var menuSpotifyAuth = this.trayIcon.ContextMenuStrip.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
+                if (menuSpotifyAuth != null)
+                    menuSpotifyAuth.Visible = true;
+            });
         }
 
         private void Spotify_WebAPIDisabled(object sender, EventArgs e)
         {
-            var menuSpotifyAuth = this.trayIcon.ContextMenu.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
-            if (menuSpotifyAuth != null)
-                menuSpotifyAuth.Visible = true;
+            this.Dispatcher.BeginInvoke(() =>
+            {
+                var menuSpotifyAuth = this.trayIcon.ContextMenuStrip.FindMenuItem(TRAY_MENU_SHORTCUT_SPOTIFY_AUTH);
+                if (menuSpotifyAuth != null)
+                    menuSpotifyAuth.Visible = true;
+            });
         }
 
         /// <summary>
@@ -1244,14 +1254,17 @@ namespace Toastify.View
         /// <param name="e"></param>
         private void Spotify_Connected(object sender, SpotifyStateEventArgs e)
         {
-            // Finalize initialization
-            this.FinalizeTrayIconInitialization();
-            this.FinalizeInit();
+            this.Dispatcher.BeginInvoke(() =>
+            {
+                // Finalize initialization
+                this.FinalizeTrayIconInitialization();
+                this.FinalizeInit();
 
-            // Update current song
-            this.paused = !e.Playing;
-            this.UpdateCurrentTrack(e.CurrentTrack);
-            this.UpdateSongProgressBar(e.TrackTime);
+                // Update current song
+                this.paused = !e.Playing;
+                this.UpdateCurrentTrack(e.CurrentTrack);
+                this.UpdateSongProgressBar(e.TrackTime);
+            });
         }
 
         private void Spotify_TrackChanged(object sender, SpotifyTrackChangedEventArgs e)
@@ -1319,6 +1332,10 @@ namespace Toastify.View
 
         private void TrayIcon_DoubleClick(object s, EventArgs ev)
         {
+            var item = this.trayIcon.ContextMenuStrip.FindMenuItem(TRAY_MENU_SHORTCUT_SETTINGS);
+            if (item != null && !item.Enabled)
+                return;
+
             SettingsView.Launch(this);
         }
 
@@ -1345,8 +1362,7 @@ namespace Toastify.View
                 switch (e.PropertyName)
                 {
                     case nameof(this.Settings.ShowSongProgressBar):
-                        //this.SongProgressBar.Visibility = this.Settings.ShowSongProgressBar ? Visibility.Visible : Visibility.Hidden;
-                        this.SongProgressBar.Visibility = Visibility.Hidden;
+                        this.SongProgressBar.Visibility = this.Settings.ShowSongProgressBar ? Visibility.Visible : Visibility.Hidden;
                         break;
 
                     case nameof(this.Settings.ToastTitlesOrder):

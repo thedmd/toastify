@@ -80,14 +80,6 @@ namespace Toastify.Common
             this.animationTimer.Dispose();
         }
 
-        public void SetContextMenuOrStrip(object value)
-        {
-            if (value.GetType() == typeof(ContextMenu))
-                this.sysTrayIcon.ContextMenu = (ContextMenu)value;
-            if (value.GetType() == typeof(ContextMenuStrip))
-                this.sysTrayIcon.ContextMenuStrip = (ContextMenuStrip)value;
-        }
-
         public void StartAnimation()
         {
             if (this.Animate)
@@ -204,12 +196,6 @@ namespace Toastify.Common
         {
             get { return this.sysTrayIcon.BalloonTipIcon; }
             set { this.sysTrayIcon.BalloonTipIcon = value; }
-        }
-
-        public ContextMenu ContextMenu
-        {
-            get { return this.sysTrayIcon.ContextMenu; }
-            set { this.sysTrayIcon.ContextMenu = value; }
         }
 
         public ContextMenuStrip ContextMenuStrip

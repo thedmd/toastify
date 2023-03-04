@@ -6,13 +6,16 @@ using System.Threading.Tasks;
 using Aleab.Common.Extensions;
 using JetBrains.Annotations;
 using log4net;
-using SpotifyAPI.Web.Models;
+using SpotifyAPI.Web;
+using SpotifyAPI.Web.Http;
 using Toastify.Model;
+using Toastify.src.Core.Auth;
 using ToastifyAPI.Core;
 using ToastifyAPI.Core.Auth;
 using ToastifyAPI.Events;
 using ToastifyAPI.Model.Interfaces;
-using SpotifyAPIWebAPI = SpotifyAPI.Web.SpotifyWebAPI;
+using IToken = ToastifyAPI.Core.Auth.IToken;
+using SpotifyClient = SpotifyAPI.Web.SpotifyClient;
 
 namespace Toastify.Core
 {
@@ -20,21 +23,30 @@ namespace Toastify.Core
     {
         private static readonly ILog logger = LogManager.GetLogger(typeof(SpotifyWebAPI));
 
-        private SpotifyAPIWebAPI _spotifyWebApi;
-        private IToken _token;
+        private SpotifyClient _spotifyWebApi;
+        private Token _token;
 
         #region Non-Public Properties
 
-        private SpotifyAPIWebAPI SpotifyWebApi
+        private SpotifyClient SpotifyWebApi
         {
             get
             {
-                return this._spotifyWebApi ?? (this._spotifyWebApi = new SpotifyAPIWebAPI(App.ProxyConfig.ProxyConfig)
+                if (_spotifyWebApi == null)
                 {
-                    TokenType = this.Token?.TokenType,
-                    AccessToken = this.Token?.AccessToken,
-                    UseAuth = true
-                });
+                    var config = SpotifyClientConfig.CreateDefault();
+
+                    var proxyConfig = App.ProxyConfig.ProxyConfig;
+                    if (proxyConfig != null)
+                        config = config.WithHTTPClient(new NetHttpClient(proxyConfig));
+
+                    if (Token != null)
+                        config = config.WithToken(Token.AccessToken, Token.TokenType);
+
+                    _spotifyWebApi = new SpotifyClient(config);
+                }
+
+                return _spotifyWebApi;
             }
         }
 
@@ -47,18 +59,7 @@ namespace Toastify.Core
         public IToken Token
         {
             get { return this._token; }
-            set
-            {
-                if (this._token == null && value != null || this._token != null && !this._token.Equals(value))
-                {
-                    this._token = value;
-                    if (this._spotifyWebApi != null)
-                    {
-                        this._spotifyWebApi.TokenType = this._token?.TokenType;
-                        this._spotifyWebApi.AccessToken = this._token?.AccessToken;
-                    }
-                }
-            }
+            set { this._token = value as Token; }
         }
 
         #endregion
@@ -74,11 +75,11 @@ namespace Toastify.Core
             if (this.SpotifyWebApi == null || !this.WaitForTokenRefresh())
                 return null;
 
-            PlaybackContext playbackContext = await this.PerformRequest(
-                async () => await this.SpotifyWebApi.GetPlayingTrackAsync().ConfigureAwait(false),
+            CurrentlyPlaying currentlyPlaying = await this.PerformRequest(
+                async () => await this.SpotifyWebApi.Player.GetCurrentlyPlaying(new PlayerCurrentlyPlayingRequest()).ConfigureAwait(false),
                 "Couldn't get the current playback context.").ConfigureAwait(false);
 
-            return playbackContext != null ? new CurrentlyPlayingObject(playbackContext) : null;
+            return currentlyPlaying != null ? new CurrentlyPlayingObject(currentlyPlaying) : null;
         }
 
         public async Task<ISpotifyUserProfile> GetUserPrivateProfileAsync()
@@ -86,27 +87,37 @@ namespace Toastify.Core
             if (this.SpotifyWebApi == null || !this.WaitForTokenRefresh())
                 return null;
 
-            PrivateProfile profile = await this.PerformRequest(
-                async () => await this.SpotifyWebApi.GetPrivateProfileAsync().ConfigureAwait(false),
+            PrivateUser profile = await this.PerformRequest(
+                async () => await this.SpotifyWebApi.UserProfile.Current().ConfigureAwait(false),
                 "Couldn't get the current user's private profile.").ConfigureAwait(false);
 
             return profile != null ? new SpotifyUserProfile(profile) : null;
         }
 
-        private async Task<T> PerformRequest<T>(Func<Task<T>> request, string errorMsg) where T : BasicModel
+        private async Task<T> PerformRequest<T>(Func<Task<T>> request, string errorMsg) where T : class
         {
             return await this.PerformRequest(request, errorMsg, true).ConfigureAwait(false);
         }
 
-        private async Task<T> PerformRequest<T>(Func<Task<T>> request, string errorMsg, bool retry) where T : BasicModel
+        private async Task<T> PerformRequest<T>(Func<Task<T>> request, string errorMsg, bool retry) where T : class
         {
-            T response = await request();
-            if (response == null || response.StatusCode() == HttpStatusCode.NoContent)
+            T response = null;
+            string apiMessage = null;
+            try
+            {
+                response = await request();
+            }
+            catch (APIException apiException)
+            {
+                apiMessage = apiException.Message;
+            }
+            var lastResponse = this.SpotifyWebApi.LastResponse;
+            if (response == null || lastResponse == null || lastResponse.StatusCode == HttpStatusCode.NoContent)
                 return null;
 
-            LogReturnedValueIfError(errorMsg, response);
+            LogReturnedValueIfError(errorMsg, lastResponse, apiMessage);
 
-            var statusCode = response.StatusCode();
+            var statusCode = lastResponse.StatusCode;
             if (statusCode == (HttpStatusCode)431)
             {
                 logger.Debug("HTTP 431 received: a new instance of SpotifyWebApi will be created.");
@@ -138,22 +149,22 @@ namespace Toastify.Core
 
         #region Static Members
 
-        private static void LogReturnedValueIfError(string msg, BasicModel ret)
+        private static void LogReturnedValueIfError(string msg, IResponse ret, string apiMessage)
         {
-            if (ret == null || ret.StatusCode() != HttpStatusCode.OK)
+            if (ret == null || ret.StatusCode != HttpStatusCode.OK)
             {
                 StringBuilder sb = new StringBuilder();
                 sb.Append($"{msg} Returned value = ");
                 if (ret != null)
                 {
                     sb.Append($"{{{Environment.NewLine}")
-                      .Append($"   StatusCode: \"{ret.StatusCode()}\"");
-                    if (ret.HasError())
+                      .Append($"   StatusCode: \"{ret.StatusCode}\"");
+                    if (apiMessage != null)
                     {
                         sb.Append($",{Environment.NewLine}")
                           .Append($"   Error: {{{Environment.NewLine}")
-                          .Append($"      Status: {ret.Error.Status},{Environment.NewLine}")
-                          .Append($"      Message: \"{ret.Error.Message}\"{Environment.NewLine}")
+                          //.Append($"      Status: {ret.Error.Status},{Environment.NewLine}")
+                          .Append($"      Message: \"{apiMessage}\"{Environment.NewLine}")
                           .Append("   }");
                     }
 

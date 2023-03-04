@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -107,28 +108,25 @@ namespace ToastifyAPI.GitHub
 
         #region Static Members
 
-        private static WebRequest CreateWebRequest(string url, IProxyConfig proxyConfig = null)
+        private static HttpResponseMessage HttpHead(string url, IProxyConfig proxyConfig = null)
         {
-            WebRequest webRequest = WebRequest.Create(url);
-            AddDefaultHeaders(webRequest);
-            webRequest.Method = HttpMethod.Head.Method;
-            webRequest.Proxy = proxyConfig?.CreateWebProxy();
-            webRequest.Timeout = 10000;
+            var httpClientHandler = new HttpClientHandler();
+            if (proxyConfig != null)
+                httpClientHandler.Proxy = proxyConfig.CreateWebProxy();
 
-            return webRequest;
+            using (HttpClient httpClient = new HttpClient(handler: httpClientHandler, disposeHandler: true))
+            {
+                AddDefaultHeaders(httpClient);
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+                return httpClient.Send(new HttpRequestMessage(HttpMethod.Head, url));
+            }
         }
 
         private static void AddDefaultHeaders(HttpClient httpClient)
         {
             httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "aleab/toastify");
             httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Referer", "aleab/toastify");
-        }
-
-        private static void AddDefaultHeaders(WebRequest webRequest)
-        {
-            // Cannot set User-Agent and Referer headers for WebRequest's
-            //webRequest.Headers[HttpRequestHeader.UserAgent] = "aleab/toastify";
-            //webRequest.Headers[HttpRequestHeader.Referer] = "aleab/toastify";
         }
 
         #endregion
@@ -180,11 +178,10 @@ namespace ToastifyAPI.GitHub
         {
             string url = $"https://github.com/{username}";
 
-            WebRequest webRequest = CreateWebRequest(url, this.proxyConfig);
-            HttpWebResponse response = null;
+            HttpResponseMessage response = null;
             try
             {
-                response = (HttpWebResponse)webRequest.GetResponse();
+                response = HttpHead(url, this.proxyConfig);
                 return $"[@$1]({url})";
             }
             catch
@@ -193,7 +190,7 @@ namespace ToastifyAPI.GitHub
             }
             finally
             {
-                response?.Close();
+                response?.Dispose();
             }
         }
 
@@ -208,11 +205,10 @@ namespace ToastifyAPI.GitHub
             string s = $"{(pull ? "pull" : "issues")}/{number}";
             string url = $"https://github.com/aleab/toastify/{s}";
 
-            WebRequest webRequest = CreateWebRequest(url, this.proxyConfig);
-            HttpWebResponse response = null;
+            HttpResponseMessage response = null;
             try
             {
-                response = (HttpWebResponse)webRequest.GetResponse();
+                response = HttpHead(url, this.proxyConfig);
                 return $"[#$1]({url})";
             }
             catch
@@ -221,7 +217,7 @@ namespace ToastifyAPI.GitHub
             }
             finally
             {
-                response?.Close();
+                response?.Dispose();
             }
         }
 
@@ -234,11 +230,10 @@ namespace ToastifyAPI.GitHub
         {
             string url = $"https://github.com/aleab/toastify/commit/{hash}";
 
-            WebRequest webRequest = CreateWebRequest(url, this.proxyConfig);
-            HttpWebResponse response = null;
+            HttpResponseMessage response = null;
             try
             {
-                response = (HttpWebResponse)webRequest.GetResponse();
+                response = HttpHead(url, this.proxyConfig);
                 return $"[`$1`]({url})";
             }
             catch
@@ -247,7 +242,7 @@ namespace ToastifyAPI.GitHub
             }
             finally
             {
-                response?.Close();
+                response?.Dispose();
             }
         }
 

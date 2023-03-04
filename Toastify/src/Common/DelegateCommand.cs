@@ -14,7 +14,9 @@ namespace Toastify.Common
         /// <summary>
         ///     Occurs when changes occur that affect whether or not the command should execute.
         /// </summary>
+#pragma warning disable CS0067 // The event 'DelegateCommand.CanExecuteChanged' is never used
         public event EventHandler CanExecuteChanged;
+#pragma warning restore CS0067
 
         #endregion
 
@@ -82,7 +84,9 @@ namespace Toastify.Common
         /// <summary>
         ///     Occurs when changes occur that affect whether or not the command should execute.
         /// </summary>
+#pragma warning disable CS0067 // The event 'DelegateCommand<T>.CanExecuteChanged' is never used
         public event EventHandler CanExecuteChanged;
+#pragma warning restore CS0067
 
         #endregion
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FakeItEasy;
 using NUnit.Framework;
-using SpotifyAPI.Web.Models;
+using SpotifyAPI.Web;
 using Toastify.Model;
 using ToastifyAPI.Model.Interfaces;
 
@@ -290,7 +290,7 @@ namespace Toastify.Tests.Model
                         Assert.That(song.Artists.FirstOrDefault(), Is.EqualTo(parts[0]));
                         Assert.That(song.Title, Is.EqualTo(parts[1]));
                     }
-                    
+
                     yield return new TestCaseData(null, new Action<Song>(song => Assert.That(song, Is.Null))).SetName("null title => null song");
                     yield return new TestCaseData(string.Empty, new Action<Song>(song => Assert.That(song, Is.Null))).SetName("empty title => null song");
                     yield return new TestCaseData(" ", new Action<Song>(song => Assert.That(song, Is.Null))).SetName("whitespace title => null song");

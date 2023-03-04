@@ -1,6 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
-using SpotifyAPI.Web.Models;
+using SpotifyAPI.Web;
 using ToastifyAPI.Model.Interfaces;
 
 namespace Toastify.Model

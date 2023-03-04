@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using log4net;
+using SpotifyAPI.Web;
+using Toastify.src.Core.Auth;
 using ToastifyAPI.Core.Auth;
 using ToastifyAPI.Events;
 using ToastifyAPI.Helpers;
+using ITokenManager = ToastifyAPI.Core.Auth.ITokenManager;
+using IToken = ToastifyAPI.Core.Auth.IToken;
 
 namespace Toastify.Core.Auth
 {
@@ -42,7 +47,7 @@ namespace Toastify.Core.Auth
         public TokenManager(ISpotifyWebAuth spotifyWebAuth)
         {
             this.SpotifyWebAuth = spotifyWebAuth ?? App.Container.Resolve<ISpotifyWebAuth>();
-            this.RefreshTimer = new Timer(this.RefreshTimerCallback);
+            this.RefreshTimer = new Timer(this.RefreshTimerCallback, null, Timeout.Infinite, 0);
             this.RefreshingTokenEvent = new ManualResetEvent(true);
         }
 
@@ -211,7 +216,7 @@ namespace Toastify.Core.Auth
             {
                 lock (this.refreshTimerLock)
                 {
-                    TimeSpan dueTime = newToken.CreateDate.Add(TimeSpan.FromSeconds(newToken.ExpiresIn)) - DateTime.Now - TimeSpan.FromMinutes(2);
+                    TimeSpan dueTime = newToken.CreateDate.Add(TimeSpan.FromSeconds(newToken.ExpiresIn)) - DateTime.UtcNow - TimeSpan.FromMinutes(2);
                     if (dueTime < TimeSpan.Zero)
                         dueTime = TimeSpan.Zero;
 

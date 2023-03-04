@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using log4net;
 using Toastify.Core;
 using Toastify.Events;
@@ -46,16 +46,27 @@ namespace Toastify.Services
                 this.AutoUpdateFailed?.Invoke(this, e);
             else
             {
-                using (var webClient = new WebClient())
+                var httpClientHandler = new HttpClientHandler
                 {
-                    webClient.Proxy = App.ProxyConfig.CreateWebProxy();
+                    Proxy = App.ProxyConfig.CreateWebProxy(),
+                };
+
+                using (var httpClient = new HttpClient(handler: httpClientHandler, disposeHandler: true))
+                {
                     try
                     {
                         if (Directory.Exists(UpdateDownloadPath))
                             Directory.Delete(UpdateDownloadPath, true);
                         Directory.CreateDirectory(UpdateDownloadPath);
                         string filePath = Path.Combine(UpdateDownloadPath, "ToastifyInstaller.exe");
-                        await webClient.DownloadFileTaskAsync(e.GitHubReleaseDownloadUrl, filePath).ConfigureAwait(false);
+
+                        using (var stream = await httpClient.GetStreamAsync(e.GitHubReleaseDownloadUrl))
+                        {
+                            using (var fileStream = new FileStream(filePath, FileMode.CreateNew))
+                            {
+                                await stream.CopyToAsync(fileStream);
+                            }
+                        }
 
                         if (File.Exists(filePath))
                         {

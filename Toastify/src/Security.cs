@@ -179,11 +179,7 @@ namespace Toastify
                 throw new ArgumentException(@"File name is not valid", nameof(fileName));
 
             // Generate entropy
-            var entropy = new byte[20];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(entropy);
-            }
+            var entropy = RandomNumberGenerator.GetBytes(20);
 
             byte[] ciphertext = ProtectedData.Protect(plaintext, entropy, DataProtectionScope.CurrentUser);
 
@@ -197,11 +193,7 @@ namespace Toastify
                 throw new ArgumentException(@"File name is not valid", nameof(fileName));
 
             // Generate entropy
-            var entropy = new byte[20];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(entropy);
-            }
+            var entropy = RandomNumberGenerator.GetBytes(20);
 
             IntPtr entropyPtr = Marshal.AllocHGlobal(entropy.Length);
             Marshal.Copy(entropy, 0, entropyPtr, entropy.Length);
@@ -329,7 +321,8 @@ namespace Toastify
             }
 
             // Only allow access to the file to the current user
-            FileSecurity acl = File.GetAccessControl(secFilePath);
+            var secFileInfo = new FileInfo(secFilePath);
+            FileSecurity acl = secFileInfo.GetAccessControl();
             acl.AddAccessRule(new FileSystemAccessRule(
                 WindowsIdentity.GetCurrent().Name,
                 FileSystemRights.Read | FileSystemRights.Write | FileSystemRights.Delete,
@@ -337,7 +330,7 @@ namespace Toastify
                 PropagationFlags.NoPropagateInherit,
                 AccessControlType.Allow));
             acl.SetAccessRuleProtection(true, false);
-            File.SetAccessControl(secFilePath, acl);
+            secFileInfo.SetAccessControl(acl);
         }
 
         #endregion Internal

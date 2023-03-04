@@ -80,7 +80,7 @@ namespace Toastify.ViewModel
 
         [PropertyDependency]
         public ITokenManager TokenManager { get; set; }
-        
+
         public bool? SpotifyWebApiStatus
         {
             get { return !this.TokenManager?.Token?.IsExpired(); }

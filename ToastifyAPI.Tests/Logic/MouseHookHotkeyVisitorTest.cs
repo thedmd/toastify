@@ -8,6 +8,7 @@ using ToastifyAPI.Interop.Interfaces;
 using ToastifyAPI.Logic;
 using ToastifyAPI.Logic.Interfaces;
 using ToastifyAPI.Model.Interfaces;
+using MouseAction = ToastifyAPI.Core.MouseAction;
 
 namespace ToastifyAPI.Tests.Logic
 {

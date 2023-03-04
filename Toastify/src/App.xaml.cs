@@ -25,14 +25,14 @@ using log4net.Repository.Hierarchy;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PowerArgs;
-using SpotifyAPI;
-using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web;
 using Toastify.Core;
 using Toastify.Core.Auth;
 using Toastify.Core.Broadcaster;
 using Toastify.Events;
 using Toastify.Model;
 using Toastify.Services;
+using Toastify.src.Core.Auth;
 using Toastify.Threading;
 using Toastify.View;
 using ToastifyAPI.Core;
@@ -43,10 +43,10 @@ using ToastifyAPI.Interop;
 using ToastifyAPI.Interop.Interfaces;
 using ToastifyAPI.Logic;
 using ToastifyAPI.Logic.Interfaces;
+using static System.Formats.Asn1.AsnWriter;
 using MouseAction = ToastifyAPI.Core.MouseAction;
 using Resources = Toastify.Properties.Resources;
 using Spotify = ToastifyAPI.Spotify;
-using ToastifyWebAuthAPI_Utils = ToastifyAPI.Core.Auth.ToastifyWebAuthAPI.Utils;
 
 namespace Toastify
 {
@@ -560,11 +560,11 @@ namespace Toastify
 
         #region Static Fields and Properties
 
-        private static readonly ProxyConfig noProxy = new ProxyConfig();
+        private static readonly SpotifyProxyConfig noProxy = new SpotifyProxyConfig();
         private static readonly string _applicationData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Toastify");
         private static readonly string _localApplicationData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Toastify");
 
-        private static ProxyConfigAdapter _proxyConfig;
+        private static SpotifyProxyConfig _proxyConfig;
 
         public static WindsorContainer Container { get; private set; }
 
@@ -634,22 +634,22 @@ namespace Toastify
         /// <summary>
         ///     The currently used proxy settings.
         /// </summary>
-        public static ProxyConfigAdapter ProxyConfig
+        public static SpotifyProxyConfig ProxyConfig
         {
             get
             {
                 if (_proxyConfig == null)
-                    _proxyConfig = new ProxyConfigAdapter(Settings.Current.ProxyConfig.ProxyConfig);
+                    _proxyConfig = new SpotifyProxyConfig(Settings.Current.ProxyConfig.ProxyConfig);
 
                 if (!Settings.Current.UseProxy)
-                    _proxyConfig.Set(noProxy);
+                    _proxyConfig.Set(noProxy.ProxyConfig);
                 return _proxyConfig;
             }
             set
             {
                 if (_proxyConfig == null)
-                    _proxyConfig = new ProxyConfigAdapter(noProxy);
-                _proxyConfig.Set(value?.ProxyConfig ?? noProxy);
+                    _proxyConfig = new SpotifyProxyConfig(noProxy.ProxyConfig);
+                _proxyConfig.Set(value?.ProxyConfig ?? noProxy.ProxyConfig);
             }
         }
 
@@ -754,16 +754,9 @@ namespace Toastify
             };
 
             // ISpotifyWebAuth
-            if (ToastifyWebAuthAPI_Utils.Try())
-            {
-                const Scope scopes = Scope.UserReadPrivate | Scope.PlaylistReadPrivate | Scope.PlaylistReadCollaborative | Scope.UserReadPlaybackState;
-                registrations.Add(Component.For<ISpotifyWebAuth>().ImplementedBy<ToastifyWebAuth>().DependsOn(
-                    Dependency.OnValue(nameof(ToastifyWebAuth.Scopes).ToLowerCamelCase(), scopes),
-                    Dependency.OnValue(nameof(ToastifyWebAuth.State).ToLowerCamelCase(), ""),
-                    Dependency.OnValue(nameof(ToastifyWebAuth.ShowDialog).ToLowerCamelCase(), true)));
-            }
-            else
-                registrations.Add(Component.For<ISpotifyWebAuth>().ImplementedBy<NoAuth>());
+            var scopes = "user-read-private,playlist-read-private,playlist-read-collaborative,user-read-playback-state";
+            registrations.Add(Component.For<ISpotifyWebAuth>().ImplementedBy<SpotifyWebAuth>().DependsOn(
+                Dependency.OnValue("Scopes", scopes)));
 
             Container.Register(registrations.ToArray());
         }

@@ -1,6 +1,6 @@
-﻿using SpotifyAPI.Web.Models;
-using ToastifyAPI.Core;
+﻿using ToastifyAPI.Core;
 using ToastifyAPI.Model.Interfaces;
+using SpotifyAPI.Web;
 
 namespace Toastify.Model
 {
@@ -12,7 +12,7 @@ namespace Toastify.Model
 
         #endregion
 
-        public SpotifyUserProfile(PrivateProfile privateProfile)
+        public SpotifyUserProfile(PrivateUser privateProfile)
         {
             switch (privateProfile.Product)
             {
@@ -34,7 +34,7 @@ namespace Toastify.Model
             }
         }
 
-        public SpotifyUserProfile(PublicProfile publicProfile)
+        public SpotifyUserProfile(PublicUser publicProfile)
         {
             this.SubscriptionLevel = SpotifySubscriptionLevel.Unknown;
         }
