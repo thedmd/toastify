@@ -1,9 +1,32 @@
-# THIS PROJECT IS NO LONGER MAINTAINED
-If you are looking for a replacement you can check out these other amazing projects:
-- [AudioBand](https://github.com/AudioBand/AudioBand)
-- [Lofi](https://github.com/dvx/lofi)
+# Toastify Revive
 
-or use Spotify's own overlay on Windows (check out [this article](https://www.alphr.com/spotify-overlay-with-game-windows/)).
+Toasitfy was revived with .NET 6.0 as underlying framework.
+
+Goals were:
+* Build project easily with .NET 6.0 and updated dependencies
+* Bring back fetching information via Spotify WebAPI
+* Update track information when toast is shown
+
+## Configuration
+
+Toastify use embedded server to handle OAuth with Spotify.
+There is no official companion app available at the moment which I have access to,
+so you will have to have your own.
+
+To make Toasitfy use your app there are two things that have to be done:
+
+* White list authorization url `http://localhost:4002/callback`
+* Create `%APPDATA%\Microsoft\UserSecrets\6732e2b1-6a37-4dbd-8835-233ec73fcb2c\secrets.json`:
+
+```json
+{
+  "ToasitfyClientId": "<your-client-id>",
+  "ToasitfyClientSecret": "<your-client-secret>"
+}
+```
+
+Toastify will read those secrets and use them on OAuth and to query currently playing track.
+
 
 # Toastify
 
