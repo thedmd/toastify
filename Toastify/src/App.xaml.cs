@@ -653,7 +653,7 @@ namespace Toastify
             }
         }
 
-        public static RepoInfo RepoInfo { get; } = new RepoInfo("toastify", "aleab");
+        public static RepoInfo RepoInfo { get; } = new RepoInfo("toastify", "thedmd");
 
         #endregion
 
