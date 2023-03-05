@@ -51,6 +51,8 @@ namespace Toastify.Core
         private DateTime lastSongChange = DateTime.Now;
         private int songChangesInTimespan;
 
+        private DateTime lastTrackTimeUpdate = DateTime.Now;
+
         #region Public Properties
 
         [PropertyDependency]
@@ -541,6 +543,19 @@ namespace Toastify.Core
             }
         }
 
+        public Task UpdateTrackTime()
+        {
+            if (this.IsWebApiRunning)
+            {
+                if (DateTime.Now >= lastTrackTimeUpdate.AddSeconds(3))
+                {
+                    return this.UpdateTrackInfoUsingWebApi().ContinueWith((Task<bool> _) => { lastTrackTimeUpdate = DateTime.Now; });
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
         private void BeginInitializeWebAPI()
         {
             if (this.TokenManager == null || this.Web == null)
@@ -581,6 +596,9 @@ namespace Toastify.Core
             }
 
             await this.OnPlayStateChanged(currentlyPlayingObject.IsPlaying).ConfigureAwait(false);
+
+            this.OnTrackTimeChanged((currentlyPlayingObject?.ProgressMs ?? 0) / 1000.0);
+
             return true;
         }
 
@@ -691,7 +709,7 @@ namespace Toastify.Core
             }
 
             this.IsWebApiRunning = true;
-            this.WebAPIInitializationSucceeded?.Invoke(this, new SpotifyStateEventArgs(this.CurrentTrack, this.IsPlaying, this.CurrentTrack?.Length ?? 0.0, 1.0));
+            this.WebAPIInitializationSucceeded?.Invoke(this, new SpotifyStateEventArgs(this.CurrentTrack, this.IsPlaying, (currentlyPlayingObject?.ProgressMs ?? 0) / 1000.0, 1.0));
         }
 
         private void OnWebAPIInitializationFailed(SpotifyWebAPIInitializationFailedReason reason)
@@ -825,7 +843,9 @@ namespace Toastify.Core
                     SpotifyStateEventArgs spotifyStateEventArgs;
 
                     if (SpotifyWindow.PausedTitles.Contains(currentTitle, StringComparer.InvariantCulture))
+                    {
                         spotifyStateEventArgs = new SpotifyStateEventArgs(null, false, 0.0, 1.0);
+                    }
                     else
                     {
                         ISong newSong = Song.FromSpotifyWindowTitle(currentTitle);

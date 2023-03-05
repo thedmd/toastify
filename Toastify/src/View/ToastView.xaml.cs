@@ -783,8 +783,13 @@ namespace Toastify.View
 
         private void UpdateSongProgressBar(double trackTime)
         {
-            double timePercentage = trackTime / this.currentTrack?.Length ?? trackTime;
-            this.toastViewModel.SongProgressBarWidth = this.SongProgressBarContainer.ActualWidth * timePercentage;
+            this.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+            {
+                double trackDuration = this.currentTrack?.Length ?? 0.0;
+                double timePercentage = trackDuration > 0 ? trackTime / trackDuration : 0.0;
+                this.toastViewModel.SongProgressBarWidth = 0;
+                this.toastViewModel.SongProgressBarWidth = this.SongProgressBarContainer.ActualWidth * timePercentage;
+            }));
         }
 
         #endregion Toast update
@@ -866,7 +871,17 @@ namespace Toastify.View
 
         public void Toggle(bool force)
         {
-            this.ShowOrHideToast(force: force);
+            if (force)
+            {
+                var updateTrackTimeTask = Spotify.Instance.UpdateTrackTime();
+
+                Task.WhenAny(updateTrackTimeTask, Task.Delay(1500, CancellationToken.None)).ContinueWith((Task) =>
+                {
+                    this.ShowOrHideToast(force: force);
+                });
+            }
+            else
+                this.ShowOrHideToast(force: force);
         }
 
         /// <summary>
