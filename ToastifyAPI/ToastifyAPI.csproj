@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <!-- Project Info -->
     <PropertyGroup>
         <Configurations>Windows (Debug);Windows (Test Release);Windows (Release)</Configurations>
@@ -16,7 +16,7 @@
     <PropertyGroup>
         <Revision>$(TimeOfDayTotalSeconds)</Revision>
         <Revision Condition="'$(Configuration)' != 'Windows (Release)'">0</Revision>
-        <Version>1.11.2</Version>
+        <Version>1.12.0</Version>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <Assembly>ToastifyAPI</Assembly>
         <Authors>Alessandro Attard Barbini</Authors>

@@ -31,13 +31,11 @@ $Lines = (Get-Content 'Toastify\Toastify.csproj' -Encoding UTF8)
 $Lines = ($Lines) -replace '^(\s*)<Version>(.*)</Version>$', "`$1<Version>$NewVersion</Version>"
 [System.IO.File]::WriteAllLines($FilePath, $Lines)
 
-# ToastifyAPI\Properties\AssemblyInfo.cs
-Write-Host "Update: ToastifyAPI\Properties\AssemblyInfo.cs"
-$FilePath = [System.IO.Path]::GetFullPath((Join-Path (pwd) "ToastifyAPI\Properties\AssemblyInfo.cs"))
-$Lines = (Get-Content 'ToastifyAPI\Properties\AssemblyInfo.cs' -Encoding UTF8)
-$Lines = ($Lines) -replace '^\[(assembly: AssemblyVersion)\(".*"\)\]$', "[`$1(`"$NewVersion.*`")]"
-$Lines = ($Lines) -replace '^\[(assembly: AssemblyFileVersion)\(".* \[DEBUG BUILD\]"\)\]$', "[`$1(`"$NewVersion [DEBUG BUILD]`")]"
-$Lines = ($Lines) -replace '^\[(assembly: AssemblyFileVersion)\(".* \[TEST BUILD\]"\)\]$', "[`$1(`"$NewVersion [TEST BUILD]`")]"
+# ToastifyAPI\ToastifyAPI.csproj
+Write-Host "Update: ToastifyAPI\ToastifyAPI.csproj"
+$FilePath = [System.IO.Path]::GetFullPath((Join-Path (pwd) "ToastifyAPI\ToastifyAPI.csproj"))
+$Lines = (Get-Content 'ToastifyAPI\ToastifyAPI.csproj' -Encoding UTF8)
+$Lines = ($Lines) -replace '^(\s*)<Version>(.*)</Version>$', "`$1<Version>$NewVersion</Version>"
 [System.IO.File]::WriteAllLines($FilePath, $Lines)
 
 Write-Host "Press any key to continue ..."
