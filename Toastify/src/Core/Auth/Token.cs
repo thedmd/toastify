@@ -28,13 +28,13 @@ namespace Toastify.src.Core.Auth
         {
         }
 
-        public Token(AuthorizationCodeRefreshResponse response)
+        public Token(AuthorizationCodeRefreshResponse response, string refreshToken)
         {
             AccessToken = response?.AccessToken;
             TokenType = response?.TokenType;
             ExpiresIn = (double)response?.ExpiresIn;
             CreateDate = response?.CreatedAt ?? DateTime.MinValue;
-            RefreshToken = response?.RefreshToken;
+            RefreshToken = response?.RefreshToken ?? refreshToken;
         }
 
         public Token(AuthorizationCodeTokenResponse response)

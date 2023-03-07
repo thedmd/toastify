@@ -111,8 +111,7 @@ namespace Toastify.src.Core.Auth
             AuthorizationCodeRefreshResponse response = await new OAuthClient().RequestToken(
                         new AuthorizationCodeRefreshRequest(CLIENT_ID, CLIENT_SECRET, token.RefreshToken));
 
-            return new Token(response);
-
+            return new Token(response, token.RefreshToken);
         }
 
         public Task<IToken> RefreshToken(IToken token)
