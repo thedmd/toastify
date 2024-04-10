@@ -22,7 +22,8 @@ namespace ToastifyAPI
         private static readonly List<string> spotifyMainWindowNames = new List<string>
         {
             "SpotifyMainWindow",
-            "Chrome_WidgetWin_0" // Since v1.0.75.483.g7ff4a0dc
+            "Chrome_WidgetWin_0", // Since v1.0.75.483.g7ff4a0dc
+            "Chrome_WidgetWin_1", // Since v1.123.773.0
         };
 
         public static string ProcessName { get; } = "spotify";
